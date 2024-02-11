@@ -219,7 +219,8 @@ def main():
         All plots on this page can analyze any uploaded Monkeytype data file.
         """
     )
-    # TODO add validation to the file upload, check if conforms to the expected format
+    if "user_processed_df" in st.session_state:
+        user_processed_df = st.session_state.user_processed_df
     with st.form("User file upload form"):
         uploaded_files = st.file_uploader(
             "Upload your own Monkeytype `results.csv` file to analyze your own data.",
@@ -230,9 +231,12 @@ def main():
         submit_button = st.form_submit_button(label="Process user's raw data")
         if submit_button and uploaded_files is not None:
             user_raw_df = pd.read_csv(uploaded_files, sep="|")
+            try:
+                user_processed_df = process.process_combined_results(user_raw_df)
+            except Exception as e:
+                pass
             user_data_is_valid = util.validate_user_data(data_df, user_processed_df)
             if user_data_is_valid:
-                user_processed_df = process.process_combined_results(user_raw_df)
                 st.session_state.user_raw_df = user_raw_df
                 st.session_state.user_processed_df = user_processed_df
             else:
@@ -245,9 +249,6 @@ def main():
             else:
                 st.write("Processed user data")
                 st.dataframe(user_processed_df)
-    # Add user data to the session state, regardless of whether it was uploaded
-    if "user_processed_df" in st.session_state:
-        user_processed_df = st.session_state.user_processed_df
     use_user_data = st.checkbox(
         """Check this box to use your uploaded data in the analyses,
         or leave it unchecked to use the app's example data.""",

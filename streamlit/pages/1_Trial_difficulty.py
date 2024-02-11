@@ -56,7 +56,8 @@ def main():
         """
     )
     st.text("")
-
+    if "user_processed_df" in st.session_state:
+        user_processed_df = st.session_state.user_processed_df
     use_user_data = st.checkbox(
         """As on the Home page, you can choose to use your own data or the example data.
         Check this box to use your uploaded data in the analyses,

@@ -25,7 +25,7 @@ def main():
     st.divider()
 
     st.subheader("Neural network model")
-    nb_url_1 = "?"
+    nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/4_nn_predict.ipynb"
     st.write(
         """
         One way to predict performance is to use a neural network model.
@@ -38,7 +38,7 @@ def main():
     # TODO
     st.divider()
 
-    nb_url_2 = "?"
+    nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/5_nn_hyperopti.ipynb"
     st.write(
         """
         Click here

@@ -363,8 +363,7 @@ def main():
     st.pyplot(fig, use_container_width=True, transparent=True)
     st.divider()
 
-    # TODO
-    nb_url = "?"
+    nb_url = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/1_explore.ipynb"
     st.write(
         f"""
         For additional exploratory data anlyses,

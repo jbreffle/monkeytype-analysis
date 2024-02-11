@@ -32,7 +32,7 @@ def main():
     st.divider()
 
     st.subheader("Simulated typing: random mistake draws")
-    nb_url_1 = "?"
+    nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/3a_sim_simple.ipynb"
     st.write(
         f"""
         One method to simulate typing is to randomly draw mistakes.
@@ -46,7 +46,7 @@ def main():
     st.divider()
 
     st.subheader("Simulated typing: Poisson process")
-    nb_url_2= "?"
+    nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/3b_sim_poisson.ipynb"
     st.write(
         """
         An alternative simulation method is to use a Poisson process.

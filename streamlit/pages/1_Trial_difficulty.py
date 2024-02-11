@@ -246,9 +246,8 @@ def main():
 
     st.divider()
 
-    # TODO
-    nb_url_1 = "?"
-    nb_url_2 = "?"
+    nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/2a_z_scoring.ipynb"
+    nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/2b_learning_curve.ipynb"
     st.write(
         f"""
         For additional trial-type specific exploratory anlyses

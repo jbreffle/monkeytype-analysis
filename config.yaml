@@ -1,0 +1,4 @@
+RAW_DATA_FOLDER: ./data/raw/
+PROCESSED_DATA_FOLDER: ./data/processed/
+COMBINED_DATA_PATH_PATTERN: ./data/processed/combined-results-*.parquet
+PROCESSED_DF_PATH_PATTERN: ./data/processed/processed-results-*.parquet

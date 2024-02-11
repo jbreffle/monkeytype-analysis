@@ -1,0 +1,18 @@
+jupyter # to run notebooks
+pandas
+numpy
+matplotlib
+scikit-learn # import sklearn
+scipy
+statsmodels
+pyprojroot
+PyYAML # import yaml
+torch
+streamlit
+pyarrow # import pyarrow.parquet as pq
+mpld3
+pytest
+boto3 # For AWS services, like S3 and EC2
+python-dotenv # from dotenv import load_dotenv; load_dotenv()
+awswrangler # import awswrangler as wr
+s3fs # Necessary for pandas to read/write from/to S3

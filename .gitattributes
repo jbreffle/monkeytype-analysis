@@ -1,0 +1,2 @@
+# Add line to ignore jupyter notebooks from GitHub's language percentage
+*.ipynb linguist-vendored

@@ -48,7 +48,7 @@ def main():
     st.subheader("Simulated typing: Poisson process")
     nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/3b_sim_poisson.ipynb"
     st.write(
-        """
+        f"""
         An alternative simulation method is to use a Poisson process.
 
         Click here

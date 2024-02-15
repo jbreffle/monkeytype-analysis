@@ -27,7 +27,7 @@ def main():
     st.subheader("Neural network model")
     nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/4_nn_predict.ipynb"
     st.write(
-        """
+        f"""
         One way to predict performance is to use a neural network model.
 
         Click here
@@ -40,7 +40,7 @@ def main():
 
     nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/5_nn_hyperopti.ipynb"
     st.write(
-        """
+        f"""
         Click here
         [./notebooks/5_nn_hyperopti.ipynb]({nb_url_2})
         for results from hyperparameter optimization.

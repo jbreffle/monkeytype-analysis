@@ -54,19 +54,15 @@ def sim_scatter_hist(wpm, acc, fig=None, **hist_kwargs):
     ax.text(
         0.05,
         0.95,
-        # f"R={wpm_acc_linregres.rvalue:.2f}, p={wpm_acc_linregres.pvalue:.2f}",
         rf"$R^2={np.square(wpm_acc_linregres.rvalue):.4f},\  p={wpm_acc_linregres.pvalue:.4f}$",
         transform=ax.transAxes,
         verticalalignment="top",
         horizontalalignment="left",
         fontsize=8,
-        color="black",
-        bbox=dict(facecolor="white", alpha=0.5),
     )
     # Configure plot
     ax.set_xlabel("WPM")
     ax.set_ylabel("Accuracy")
-    ax.set_title("Simulated WPM vs Accuracy")
     ax_histx.tick_params(axis="x", labelbottom=False)
     ax_histy.tick_params(axis="y", labelleft=False)
     ax_histx.set_ylabel("Count")

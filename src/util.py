@@ -9,10 +9,10 @@ from scipy.optimize import curve_fit
 # Functions
 def run_simulation_poisson(
     avg_wpm=60,
-    avg_acc=0.975,
+    avg_acc=0.95,
     duration=60,
-    n_trials=500,
-    error_cost=0.0,
+    n_trials=1000,
+    error_cost=0.75,
     dt=0.005,
     silent=False,
 ):
@@ -88,11 +88,11 @@ def run_simulation_poisson(
 
 def run_simulation_simple(
     avg_wpm=60,
-    avg_acc=0.975,
+    avg_acc=0.95,
     duration=60,
     n_trials=10000,
-    error_mean=0.1,
-    error_std=0.1,
+    error_mean=0.5,
+    error_std=0.45,
     silent=False,
     use_lognormal=True,
 ):

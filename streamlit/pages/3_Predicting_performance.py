@@ -23,7 +23,7 @@ def load_model(model_path=MODEL_PATH):
     X_test = np.load(model_path / "X_test.npy")
     y_test = np.load(model_path / "y_test.npy")
     # Select device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"  # No cuda on streamlit community cloud
     model.to(device)
     X_test = torch.tensor(X_test, dtype=torch.float).to(device)
     y_test = torch.tensor(y_test, dtype=torch.float).to(device)

@@ -15,13 +15,16 @@ import hashlib
 MODEL_PATH = pyprojroot.here("models")
 MODEL_PATH.mkdir(parents=True, exist_ok=True)
 
+STREAMLIT_MODE_PATH = pyprojroot.here("streamlit/streamlit-data")
+STREAMLIT_MODE_PATH.mkdir(parents=True, exist_ok=True)
+
 
 # Functions
 def load_loss(model_name, model_path=MODEL_PATH):
     """Load a model from disk."""
     model_hash = model_name.split("_")[1].split(".")[0]
-    train_loss = np.load(model_path / f"train_loss_{model_name}.npy")
-    test_loss = np.load(model_path / f"test_loss_{model_name}.npy")
+    train_loss = np.load(model_path / f"train_loss_{model_hash}.npy")
+    test_loss = np.load(model_path / f"test_loss_{model_hash}.npy")
     return train_loss, test_loss
 
 
@@ -31,15 +34,41 @@ def load_model(model_name, model_path=MODEL_PATH):
     return model
 
 
+def save_for_streamlit(
+    model,
+    train_loss,
+    test_loss,
+    X_test,
+    y_test,
+    streamlit_model_path=STREAMLIT_MODE_PATH,
+):
+    # Save to streamlit
+    model_streamlit = torch.jit.script(model)
+    model_streamlit.save(streamlit_model_path / "streamlit_model.pt")
+    # Save to streamlit
+    np.save(streamlit_model_path / "streamlit_train_loss", train_loss)
+    np.save(streamlit_model_path / "streamlit_test_loss", test_loss)
+    np.save(streamlit_model_path / "X_test", X_test.cpu())
+    np.save(streamlit_model_path / "y_test", y_test.cpu())
+    return None
+
+
 def save_model(
-    model, model_name, train_loss=None, test_loss=None, model_path=MODEL_PATH
+    model,
+    model_name,
+    train_loss=None,
+    test_loss=None,
+    model_path=MODEL_PATH,
+    streamlit_model_path=STREAMLIT_MODE_PATH,
+    save_to_streamlit=False,
 ):
     """Save a model to disk."""
     torch.save(model, model_path / model_name)
+    model_hash = model_name.split("_")[1].split(".")[0]
     if train_loss is not None:
-        np.save(model_path / f"train_loss_{model_name}", train_loss)
+        np.save(model_path / f"train_loss_{model_hash}", train_loss)
     if test_loss is not None:
-        np.save(model_path / f"test_loss_{model_name}", test_loss)
+        np.save(model_path / f"test_loss_{model_hash}", test_loss)
     return None
 
 

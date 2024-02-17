@@ -35,9 +35,13 @@ def model_feature_scatter(
         ax=ax1,
         **scatter_kwargs,
     )
-    # Make sure the y-axis is the same for both plots, then hide from the second plot
+    # Make sure the y-axis is the same for both plots
     ax1.set_ylim(ax0.get_ylim())
-    ax1.yaxis.set_visible(False)
+    ax1.set_yticklabels([])
+    for tic in ax1.yaxis.get_major_ticks():
+        tic.tick1line.set_visible(False)
+        tic.tick2line.set_visible(False)
+    ax1.set_ylabel("")
     # Turn off legend for the second plot
     ax1.get_legend().remove()
 
@@ -57,9 +61,8 @@ def model_feature_scatter0(
     ax.scatter(x_values, true_values, c="tab:blue", **scatter_kwargs)
     ax.scatter(x_values, predicted_values, c="tab:orange", **scatter_kwargs)
     ax.set_xlabel(util.get_label_string(x_feature))
-    ax.set_ylabel("Value")
+    ax.set_ylabel(util.get_label_string("wpm"))
     ax.legend(["True", "Predicted"])
-
     return ax
 
 

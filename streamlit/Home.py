@@ -82,6 +82,8 @@ def set_plt_style():
         "axes.titlepad": 8,
         "axes.labelsize": 8,
         "axes.titlesize": 12,
+        "legend.frameon": False,
+        "legend.fontsize": 8,
     }
     plt.rcParams.update(params)
     return

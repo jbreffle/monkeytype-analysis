@@ -213,6 +213,8 @@ def get_label_string(label):
             return "Inter-trial interval (s, all trials)"
         case "iti_session":
             return "Inter-trial interval (s, session)"
+        case "trial_num":
+            return "Trial number"
         case _:
             return label
 

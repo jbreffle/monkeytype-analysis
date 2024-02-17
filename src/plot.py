@@ -10,6 +10,94 @@ from scipy.optimize import curve_fit
 from src import util
 
 
+def model_feature_scatter(
+    true_values, predicted_values, x_values, fig=None, **scatter_kwargs
+):
+    """Same as model_feature_scatter0, but two features are plotted on the same figure."""
+    if fig is None:
+        fig = plt.figure(figsize=(6, 4))
+    gs = fig.add_gridspec(1, 2, width_ratios=(1, 1), wspace=0.05)
+    ax0 = fig.add_subplot(gs[0, 0])
+    ax1 = fig.add_subplot(gs[0, 1])
+    model_feature_scatter0(
+        true_values,
+        predicted_values,
+        x_values[:, 1],
+        "trial_num",
+        ax=ax0,
+        **scatter_kwargs,
+    )
+    model_feature_scatter0(
+        true_values,
+        predicted_values,
+        x_values[:, 2],
+        "trial_type_num",
+        ax=ax1,
+        **scatter_kwargs,
+    )
+    # Make sure the y-axis is the same for both plots, then hide from the second plot
+    ax1.set_ylim(ax0.get_ylim())
+    ax1.yaxis.set_visible(False)
+    # Turn off legend for the second plot
+    ax1.get_legend().remove()
+
+    return fig, ax0, ax1
+
+
+def model_feature_scatter0(
+    true_values, predicted_values, x_values, x_feature, ax=None, **scatter_kwargs
+):
+    """Scatter plot of true vs predicted values, with a third feature as the color."""
+    if ax is None:
+        ax = plt.gca()
+    if "s" not in scatter_kwargs:
+        scatter_kwargs["s"] = 5
+    if "alpha" not in scatter_kwargs:
+        scatter_kwargs["alpha"] = 0.5
+    ax.scatter(x_values, true_values, c="tab:blue", **scatter_kwargs)
+    ax.scatter(x_values, predicted_values, c="tab:orange", **scatter_kwargs)
+    ax.set_xlabel(util.get_label_string(x_feature))
+    ax.set_ylabel("Value")
+    ax.legend(["True", "Predicted"])
+
+    return ax
+
+
+def model_scatter(true_values, predicted_values, ax=None, **scatter_kwargs):
+    """Scatter plot of true vs predicted values."""
+    if ax is None:
+        ax = plt.gca()
+    if "s" not in scatter_kwargs:
+        scatter_kwargs["s"] = 5
+    if "alpha" not in scatter_kwargs:
+        scatter_kwargs["alpha"] = 0.5
+    ax.scatter(true_values, predicted_values, **scatter_kwargs)
+    ax.set_xlabel("Actual WPM")
+    ax.set_ylabel("Predicted WPM")
+    # Ref line, without affecting axis limits
+    lims = [
+        np.min([ax.get_xlim(), ax.get_ylim()]),
+        np.max([ax.get_xlim(), ax.get_ylim()]),
+    ]
+    ax.plot(lims, lims, "k--", alpha=0.75, zorder=0)
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+    return ax
+
+
+def model_loss(train_loss, test_loss, ax=None, **plot_kwargs):
+    """Plot the loss of a model."""
+    if ax is None:
+        ax = plt.gca()
+    ax.plot(train_loss, label="Train loss", **plot_kwargs)
+    ax.plot(test_loss, label="Test loss", **plot_kwargs)
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Loss")
+    ax.set_yscale("log")
+    ax.legend()
+    return ax
+
+
 def sim_n_mistakes(n_mistakes, ax=None, **hist_kwargs):
     if ax is None:
         ax = plt.gca()

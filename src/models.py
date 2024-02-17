@@ -8,9 +8,56 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import pandas as pd
+import pyprojroot
+
+import hashlib
+
+MODEL_PATH = pyprojroot.here("models")
+MODEL_PATH.mkdir(parents=True, exist_ok=True)
 
 
 # Functions
+def load_loss(model_name, model_path=MODEL_PATH):
+    """Load a model from disk."""
+    model_hash = model_name.split("_")[1].split(".")[0]
+    train_loss = np.load(model_path / f"train_loss_{model_name}.npy")
+    test_loss = np.load(model_path / f"test_loss_{model_name}.npy")
+    return train_loss, test_loss
+
+
+def load_model(model_name, model_path=MODEL_PATH):
+    """Load a model from disk."""
+    model = torch.load(model_path / model_name)
+    return model
+
+
+def save_model(
+    model, model_name, train_loss=None, test_loss=None, model_path=MODEL_PATH
+):
+    """Save a model to disk."""
+    torch.save(model, model_path / model_name)
+    if train_loss is not None:
+        np.save(model_path / f"train_loss_{model_name}", train_loss)
+    if test_loss is not None:
+        np.save(model_path / f"test_loss_{model_name}", test_loss)
+    return None
+
+
+def model_exists(model_name, model_path=MODEL_PATH):
+    """Check if a model exists."""
+    return (model_path / model_name).is_file()
+
+
+def get_model_name(params, str_length=20):
+    """Create a unique hash based on model hyperparameters, to use as a filename."""
+    string_to_hash = ""
+    for key, value in vars(params).items():
+        string_to_hash += f"{key}{value}"
+    hash_str = hashlib.md5(string_to_hash.encode()).hexdigest()[:str_length]
+    model_name = f"model_{hash_str}.pt"
+    return model_name
+
+
 def generate_dummy_df(X_df, trial_type_id=None):
     """Generate a dummy dataframe for testing the models."""
     # TODO this still needs cleaned up

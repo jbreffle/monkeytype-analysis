@@ -17,17 +17,18 @@ MODEL_PATH = pyprojroot.here("streamlit/streamlit-data/")
 @st.cache_resource
 def load_model(model_path=MODEL_PATH):
     """Load a model from disk."""
-    model = torch.jit.load(os.path.join(model_path, "streamlit_model.pt"))
+    device = "cpu"  # No cuda on streamlit community cloud
+    model = torch.jit.load(
+        os.path.join(model_path, "streamlit_model.pt"), map_location=device
+    )
     train_loss = np.load(model_path / "streamlit_train_loss.npy")
     test_loss = np.load(model_path / "streamlit_test_loss.npy")
     X_test = np.load(model_path / "X_test.npy")
     y_test = np.load(model_path / "y_test.npy")
     # Select device
-    device = "cpu"  # No cuda on streamlit community cloud
     model.to(device)
     X_test = torch.tensor(X_test, dtype=torch.float).to(device)
     y_test = torch.tensor(y_test, dtype=torch.float).to(device)
-
     return model, train_loss, test_loss, X_test, y_test
 
 

@@ -7,6 +7,147 @@ from scipy.optimize import curve_fit
 
 
 # Functions
+def run_simulation_poisson(
+    avg_wpm=60,
+    avg_acc=0.975,
+    duration=60,
+    n_trials=500,
+    error_cost=0.0,
+    dt=0.005,
+    silent=False,
+):
+    """Simulate a typing test as a Poisson process.
+
+    Across time steps, the probability of typing a correct or incorrect letter is
+    modelled as a Poisson process.
+
+    Parameters:
+        avg_wpm (float): The average wpm.
+        avg_acc (float): The average accuracy.
+        duration (int): The duration of each test.
+        n_trials (int): The number of tests.
+        error_cost (float): The cost of making an error.
+        dt (float): The time step.
+        silent (bool): Whether to print the results.
+    """
+    # Dependent parameters
+    n_timesteps = int(duration / dt)  # number of time steps
+    word_length = 5  # Standardized word length
+    error_cost_dt = round(error_cost / dt)  # cost of making an error (in time steps)
+    cps_correct = (
+        avg_wpm * word_length / 60
+    )  # correct clicks per second, not including error_cost
+    cps_incorrect = (
+        avg_wpm * word_length / 60 * (1 - avg_acc)
+    )  # incorrect clicks per second, not including error_cost
+    cps_total = (cps_correct + cps_incorrect) / (
+        1 - (cps_incorrect * error_cost)
+    )  # Total clicks per second, including error_cost
+    p_letter = cps_total * dt  # probability of typing a letter in a time step
+    # Set up arrays
+    t = np.arange(0, duration, dt)  # time array
+    correct_typed = np.zeros(
+        (n_trials, n_timesteps)
+    )  # 1 for correct letter, 0 otherwise
+    incorrect_typed = np.zeros(
+        (n_trials, n_timesteps)
+    )  # 1 for incorrect letter, 0 otherwise
+    n_mistakes = np.zeros((n_trials))  # number of mistakes
+    wpm = np.zeros((n_trials))  # Trial wpm
+    acc = np.zeros((n_trials))  # trial acc
+    # Loop over trials
+    for ithTrial in range(n_trials):
+        ithTimeStep = 0
+        while ithTimeStep < n_timesteps:
+            # Did we type a letter?
+            if np.random.rand() < p_letter:
+                # Did we type it correctly?
+                if np.random.rand() < avg_acc:
+                    correct_typed[ithTrial, ithTimeStep] = 1
+                else:
+                    incorrect_typed[ithTrial, ithTimeStep] = 1
+                    ithTimeStep += error_cost_dt  # Jump ahead in time
+            ithTimeStep += 1  # Increment time step
+
+        # Calculate words per minute for the trial
+        wpm[ithTrial] = (
+            np.sum(correct_typed[ithTrial, :]) / word_length / duration
+        ) * 60
+
+        # Calculate accuracy for the trial
+        acc[ithTrial] = np.sum(correct_typed[ithTrial, :]) / (
+            np.sum(correct_typed[ithTrial, :]) + np.sum(incorrect_typed[ithTrial, :])
+        )
+        n_mistakes[ithTrial] = np.sum(incorrect_typed[ithTrial, :])
+    # Print the results
+    if not silent:
+        print("Average WPM: " + str(np.mean(wpm)))
+        print("Average Accuracy: " + str(np.mean(acc)))
+    return wpm, acc, n_mistakes
+
+
+def run_simulation_simple(
+    avg_wpm=60,
+    avg_acc=0.975,
+    duration=60,
+    n_trials=10000,
+    error_mean=0.1,
+    error_std=0.1,
+    silent=False,
+):
+    """Simulate a typing test with random mistakes.
+
+    For each trial, the number of mistakes is drawn from a Poisson distribution,
+    and the duration of each mistake is drawn from a normal distribution.
+
+    Parameters:
+        avg_wpm (float): The average wpm.
+        avg_acc (float): The average accuracy.
+        duration (int): The duration of each test.
+        n_trials (int): The number of tests.
+        error_mean (float): Mean duration of each mistake.
+        error_std (float): STD of the duration of each mistake.
+        silent (bool): Whether to print the results.
+
+    Returns:
+        wpm (np.array): The wpm for each test.
+        acc (np.array): The accuracy for each test.
+        n_mistakes (np.array): The number of mistakes for each test.
+    """
+    # Dependent parameters
+    word_length = 5  # Standardized word length
+    cps_correct = avg_wpm * word_length / 60  # Correct characters per second
+    cps_incorrect = cps_correct * (1 - avg_acc)  # Incorrect characters per second
+    cps_total = (cps_correct + cps_incorrect) / (
+        1 - (cps_correct * error_mean)
+    )  # Total clicks per second, including error_cost
+    # cps_total = (cps_correct+cps_incorrect)
+    # Mistakes occur as a poisson process
+    mistake_lambda = cps_total * (1 - avg_acc) * duration
+    # Set up
+    wpm = np.zeros(n_trials)
+    acc = np.zeros(n_trials)
+    n_mistakes = np.random.poisson(mistake_lambda, n_trials)
+    # Loop over each test
+    for i in range(n_trials):
+        # The number of mistakes
+        n = n_mistakes[i]
+        # The durations of the mistakes
+        times = np.random.normal(error_mean, error_std, n)
+        # times = np.random.lognormal(np.log(error_mean), error_std, n)
+        # The wpm for the test
+        # wpm[i] = avg_wpm/60 * duration * word_length / (duration + np.sum(times))
+        wpm[i] = avg_wpm / 60 * (duration - np.sum(times))
+        # The accuracy for the test
+        # acc[i] = avg_acc * (duration + np.sum(times)) / duration
+        acc[i] = 1 - (n / duration / word_length)
+    # Print the results
+    if not silent:
+        print("Average WPM: " + str(np.mean(wpm)))
+        print("Average Accuracy: " + str(np.mean(acc)))
+    return wpm, acc, n_mistakes
+
+
 def validate_user_data(data_df, user_processed_df):
     """Returns boolean indicating whether the user data is valid.
     The user data is valid if it is a pandas DataFrame and has the same columns
@@ -18,10 +159,9 @@ def validate_user_data(data_df, user_processed_df):
         return False
     if user_processed_df.columns.to_list() != data_df.columns.to_list():
         return False
-    #if not user_processed_df.dtypes.equals(data_df.dtypes):
+    # if not user_processed_df.dtypes.equals(data_df.dtypes):
     #    return False
     return True
-
 
 
 def get_label_string(label):

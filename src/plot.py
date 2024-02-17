@@ -10,6 +10,70 @@ from scipy.optimize import curve_fit
 from src import util
 
 
+def sim_n_mistakes(n_mistakes, ax=None, **hist_kwargs):
+    if ax is None:
+        ax = plt.gca()
+    ax.hist(n_mistakes, **hist_kwargs)
+    ax.set_xlabel("Number of Mistakes")
+    ax.set_ylabel("Count (trial)")
+    ax.set_title("Simulated Number of Mistakes")
+    return ax
+
+
+def sim_scatter_hist(wpm, acc, fig=None, **hist_kwargs):
+    """..."""
+    if fig is None:
+        fig = plt.figure(figsize=(6, 4))
+    gs = fig.add_gridspec(
+        2,
+        2,
+        width_ratios=(4, 1),
+        height_ratios=(1, 4),
+        left=0.1,
+        right=0.9,
+        bottom=0.1,
+        top=0.9,
+        wspace=0.05,
+        hspace=0.05,
+    )
+    ax = fig.add_subplot(gs[1, 0])
+    ax_histx = fig.add_subplot(gs[0, 0], sharex=ax, **hist_kwargs)
+    ax_histy = fig.add_subplot(gs[1, 1], sharey=ax, **hist_kwargs)
+    # Plot data
+    ax.scatter(wpm, acc, s=2.5)
+    ax_histx.hist(wpm, bins=20)
+    ax_histy.hist(acc, bins=20, orientation="horizontal")
+    # Plot linear regression
+    wpm_acc_linregres = scipy.stats.linregress(wpm, acc)
+    ax.plot(
+        wpm,
+        wpm_acc_linregres.intercept + wpm_acc_linregres.slope * wpm,
+        "r",
+        label="fitted line",
+    )
+    ax.text(
+        0.05,
+        0.95,
+        # f"R={wpm_acc_linregres.rvalue:.2f}, p={wpm_acc_linregres.pvalue:.2f}",
+        rf"$R^2={np.square(wpm_acc_linregres.rvalue):.2f},\  p={wpm_acc_linregres.pvalue:.2f}$",
+        transform=ax.transAxes,
+        verticalalignment="top",
+        horizontalalignment="left",
+        fontsize=8,
+        color="black",
+        bbox=dict(facecolor="white", alpha=0.5),
+    )
+    # Configure plot
+    ax.set_xlabel("WPM")
+    ax.set_ylabel("Accuracy")
+    ax.set_title("Simulated WPM vs Accuracy")
+    ax_histx.tick_params(axis="x", labelbottom=False)
+    ax_histy.tick_params(axis="y", labelleft=False)
+    ax_histx.set_ylabel("Count")
+    ax_histy.set_xlabel("Count")
+    return ax, ax_histx, ax_histy
+
+
 def log_fit_scatter(
     df,
     y_label,

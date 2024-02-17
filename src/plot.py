@@ -55,7 +55,7 @@ def sim_scatter_hist(wpm, acc, fig=None, **hist_kwargs):
         0.05,
         0.95,
         # f"R={wpm_acc_linregres.rvalue:.2f}, p={wpm_acc_linregres.pvalue:.2f}",
-        rf"$R^2={np.square(wpm_acc_linregres.rvalue):.2f},\  p={wpm_acc_linregres.pvalue:.2f}$",
+        rf"$R^2={np.square(wpm_acc_linregres.rvalue):.4f},\  p={wpm_acc_linregres.pvalue:.4f}$",
         transform=ax.transAxes,
         verticalalignment="top",
         horizontalalignment="left",

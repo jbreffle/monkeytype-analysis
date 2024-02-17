@@ -94,6 +94,7 @@ def run_simulation_simple(
     error_mean=0.1,
     error_std=0.1,
     silent=False,
+    use_lognormal=True,
 ):
     """Simulate a typing test with random mistakes.
 
@@ -116,31 +117,44 @@ def run_simulation_simple(
     """
     # Dependent parameters
     word_length = 5  # Standardized word length
-    cps_correct = avg_wpm * word_length / 60  # Correct characters per second
-    cps_incorrect = cps_correct * (1 - avg_acc)  # Incorrect characters per second
-    cps_total = (cps_correct + cps_incorrect) / (
-        1 - (cps_correct * error_mean)
-    )  # Total clicks per second, including error_cost
-    # cps_total = (cps_correct+cps_incorrect)
+    expected_total_mistakes = (
+        avg_wpm / 60 * word_length * (1 - avg_acc) * duration
+    )  # Expected number of mistakes
+    expected_total_mistake_duration = expected_total_mistakes * error_mean
+    effective_duration = duration - expected_total_mistake_duration
+    avg_cps = (
+        avg_wpm * word_length / 60 * (duration / effective_duration)
+    )  # average correct clicks per second
     # Mistakes occur as a poisson process
-    mistake_lambda = cps_total * (1 - avg_acc) * duration
+    mistake_lambda = avg_cps * (1 - avg_acc) * effective_duration
     # Set up
     wpm = np.zeros(n_trials)
     acc = np.zeros(n_trials)
     n_mistakes = np.random.poisson(mistake_lambda, n_trials)
-    # Loop over each test
+    # Simulate each trial
     for i in range(n_trials):
-        # The number of mistakes
-        n = n_mistakes[i]
-        # The durations of the mistakes
-        times = np.random.normal(error_mean, error_std, n)
-        # times = np.random.lognormal(np.log(error_mean), error_std, n)
-        # The wpm for the test
-        # wpm[i] = avg_wpm/60 * duration * word_length / (duration + np.sum(times))
-        wpm[i] = avg_wpm / 60 * (duration - np.sum(times))
-        # The accuracy for the test
-        # acc[i] = avg_acc * (duration + np.sum(times)) / duration
-        acc[i] = 1 - (n / duration / word_length)
+        # Number of mistakes in this trial
+        n = np.random.poisson(mistake_lambda)
+        # Durations to fix each mistake
+        if use_lognormal:
+            mu = np.log(error_mean**2 / np.sqrt(error_mean**2 + error_std**2))
+            sigma = np.sqrt(np.log(1 + error_std**2 / error_mean**2))
+            all_mistake_durations = np.random.lognormal(mean=mu, sigma=sigma, size=n)
+        else:
+            all_mistake_durations = np.random.normal(error_mean, error_std, n)
+
+        # Total time spent fixing mistakes
+        total_correction_time = np.sum(all_mistake_durations)
+
+        # Total characters typed correctly (assumes all corrected characters are eventually correct)
+        total_chars_correct = avg_cps * (duration - total_correction_time)
+
+        # Adjust WPM based on effective duration
+        wpm[i] = (total_chars_correct / word_length) / (duration / 60)
+
+        # Calculate accuracy as ratio of correct characters to total attempted characters (including mistakes)
+        total_chars_attempted = total_chars_correct + n
+        acc[i] = total_chars_correct / total_chars_attempted
     # Print the results
     if not silent:
         print("Average WPM: " + str(np.mean(wpm)))

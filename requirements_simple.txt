@@ -3,6 +3,7 @@ matplotlib
 streamlit
 pyprojroot
 boto3
+s3fs # Necessary for pandas to read/write from/to S3
 scipy
 python-dotenv
 PyYAML

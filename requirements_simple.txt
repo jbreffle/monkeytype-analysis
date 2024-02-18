@@ -4,5 +4,8 @@ streamlit
 pyprojroot
 boto3
 scipy
+python-dotenv
+PyYAML
+pyarrow
 flake8
 pytest

@@ -8,7 +8,7 @@ import hashlib
 import glob
 
 import boto3
-from dotenv import load_dotenv  # python-dotenv
+from dotenv import load_dotenv
 import pandas as pd
 import pyprojroot
 import yaml

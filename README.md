@@ -1,13 +1,15 @@
 # monkeytype
 
-In depth analysis and modeling of personal typing test data from [monkeytype](https://monkeytype.com/).
+In depth analysis and modeling of personal typing test data from
+[monkeytype](<https://monkeytype.com/>)
+with an interactive streamlit
+[jbreffle.github.io/monkeytype-app](<https://jbreffle.github.io/monkeytype-app>).
 
-## Usage notes
+## Usage notes for local development
 
 - Set up your python environment based on ./requirements.txt
 - Replace the data in ./data/raw/ with your own data downloaded from your monkeytype [account](https://monkeytype.com/account) using the "Export CSV" button
-- Run process.combine_raw_results() to process the raw data into a single csv file ./data/results.csv
-- Run the notebooks as desired
+- Run the notebook as desired
 - Note: monkeytype only retains the 1000 most recent trials, so to store all of your results you must periodically download your data
 - Note: The "Export CSV" button on the monkeytype.com/account page will export only the data you are currently viewing, so make sure "all" is selected under the "filters" option in order to export all of your data
 
@@ -19,7 +21,7 @@ In depth analysis and modeling of personal typing test data from [monkeytype](ht
 - 3a_sim_simple: What is the intrinsic correlation between accuracy and performance if we model typing as consisting of random errors with random error-correction times?
 - 3b_sim_poisson: Does modeling typing as a Poisson process produce the same results?
 - 4_nn_predict: Can we train a neural network to predict WPM performance from trial-type labels and number of trials completed?
-- 5_nn_hyperopti: Can we optimize the hyperparameters of the neural network?
+- 5_nn_hyperopt: Using hyperopt to optimize the hyperparameters of the neural network
 - state-space: Can we fit a state-space model to the data that takes into account trial-type difficulty to predict performance across time?
 - stationary-performance: What would we expect the data to look like if there were no long-run improvement in performance?
 - z_dynamodb_example.ipynb: Testing out reading/writing to a DynamoDB table
@@ -27,7 +29,6 @@ In depth analysis and modeling of personal typing test data from [monkeytype](ht
 
 ## TODOs
 
-- Switch to using hyperopt for hyperparameter optimization
 - Calculate wpm v acc correlation for each trial type
 - Run parameter grids in the simulation analyses
 - Try simpler models of skill analysis: XGBregressor, fit a combined Learning Curve model

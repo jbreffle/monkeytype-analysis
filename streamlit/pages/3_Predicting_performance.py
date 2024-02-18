@@ -44,18 +44,28 @@ def main():
     st.title("Predicting performance")
     st.write(
         """
-        Can we train a model to predict a user's performance on a trial?
-        We don't have a direct measure of a trial type's difficulty,
-        but we can use the user's performance on other trials to predict
-        their performance on a new trial.
+        Given the large differences in difficulty between different trial types,
+        it is difficult to compare performance across trials.
+        Can we train a model that is able to predict a user's performance over time
+        and across different trial types?
         """
     )
     st.divider()
 
     st.subheader("Neural network model")
     st.write(
-        f"""
+        """
         One way to predict performance is to use a neural network model.
+        Here we train a simple feedforward neural network with a single output node
+        to predict the user's typing speed (wpm).
+
+        The features for each trial are the following:
+        - Which trial type it is
+        - The trial's accuracy (%)
+        - The number of all trials completed so far
+        - The number of trials of the same type completed so far
+        
+        Here are the Train and Test losses over time from training one such network:
         """
     )
     model, train_loss, test_loss, X_test, y_test = load_model()
@@ -64,6 +74,13 @@ def main():
     ax = plot.model_loss(train_loss, test_loss)
     st.pyplot(fig, use_container_width=True, transparent=True)
     # Plot actual vs predicted
+    st.write(
+        """        
+        We are able to predict the user's typing speed with a reasonable degree of
+        accuracy.
+        Here is the predicted typing speed vs. the actual typing speed for the test set:
+        """
+    )
     test_predictions = model(X_test)
     fig = plt.figure(figsize=(6, 3))
     ax = plot.model_scatter(
@@ -71,6 +88,14 @@ def main():
     )
     st.pyplot(fig, use_container_width=True, transparent=True)
     # Plot actual and predicted across feature values
+    st.write(
+        """
+        Here is the same data, but now we are plotting the actual values in blue
+        and the predicted values in orange, across the different feature values.
+        We see that the model learned the shape of performance curves for the different
+        trial types.
+        """
+    )
     fig = plt.figure(figsize=(6, 3))
     fig, ax0, ax1 = plot.model_feature_scatter(
         y_test.cpu(), test_predictions.detach().cpu().numpy(), X_test.cpu(), fig=fig
@@ -81,19 +106,19 @@ def main():
     st.divider()
 
     nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/4_nn_predict.ipynb"
-    st.write(
-        f"""
-        Click here
-        [./notebooks/4_nn_predict.ipynb]({nb_url_1})
-        for additional training and additional plots.
-        """
-    )
     nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/5_nn_hyperopti.ipynb"
     st.write(
         f"""
         Click here
+        [./notebooks/4_nn_predict.ipynb]({nb_url_1})
+        for additional analysis and plots from training the neural network,
+        including analysis of dummy data to evaluate the model's learned
+        performance curves.
+
+        Click here
         [./notebooks/5_nn_hyperopti.ipynb]({nb_url_2})
-        for results from hyperparameter optimization.
+        for results from hyperparameter optimization,
+        including plots of loss as a function of hyperparameter values.
         """
     )
 

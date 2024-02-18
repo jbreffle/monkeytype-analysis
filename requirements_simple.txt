@@ -1,22 +1,5 @@
-#jupyter # to run notebooks
-#torch
-#hyperopt
-#pytest
-#mpld3
-#statsmodels
-pandas
-numpy
-matplotlib
-#scikit-learn # import sklearn
-scipy
-pyprojroot
-PyYAML # import yaml
+# torch # Install cpu only version in the Dockerfile
 streamlit
-# pyarrow # import pyarrow.parquet as pq
-boto3 # For AWS services, like S3 and EC2
-python-dotenv # from dotenv import load_dotenv; load_dotenv()
-awswrangler # import awswrangler as wr
-s3fs # Necessary for pandas to read/write from/to S3
-# For GitHub actions
+pyprojroot
 flake8
 pytest

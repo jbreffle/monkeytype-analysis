@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pyprojroot
 import torch
-from torch import Tensor
 
 from src import plot
 

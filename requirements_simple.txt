@@ -3,5 +3,6 @@ matplotlib
 streamlit
 pyprojroot
 boto3
+scipy
 flake8
 pytest

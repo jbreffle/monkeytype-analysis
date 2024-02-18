@@ -1,4 +1,5 @@
 # torch # Install cpu only version in the Dockerfile
+matplotlib
 streamlit
 pyprojroot
 flake8

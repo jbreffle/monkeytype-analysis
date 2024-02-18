@@ -7,7 +7,7 @@ WORKDIR /app
 RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
 
 # First, copy only requirements.txt and install Python dependencies to leverage Docker cache
-COPY requirements_simple.txt requirements.txt
+COPY requirements_docker.txt requirements.txt
 RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
 # Then copy the rest of the application

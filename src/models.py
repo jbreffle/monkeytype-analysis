@@ -54,13 +54,7 @@ def save_for_streamlit(
 
 
 def save_model(
-    model,
-    model_name,
-    train_loss=None,
-    test_loss=None,
-    model_path=MODEL_PATH,
-    streamlit_model_path=STREAMLIT_MODE_PATH,
-    save_to_streamlit=False,
+    model, model_name, train_loss=None, test_loss=None, model_path=MODEL_PATH
 ):
     """Save a model to disk."""
     torch.save(model, model_path / model_name)
@@ -138,13 +132,14 @@ def get_default_params():
     """Function to initilize default hyperparameters"""
     params = type("Params", (), {})()
     # Data
-    params.batch_size = 256
+    params.batch_size = 128
     params.train_size = 0.8
     # Model
     params.n_hidden_units = 10
+    params.n_layers = 2
     # Training
     params.log_interval = 100  # How often to log results in epochs
-    params.lr = 1e-3  # Learning rate
+    params.learning_rate = 1e-3
     params.weight_decay = 1e-5
     params.n_epochs = 1000
     params.gamma = 0.999  # Learning rate decay
@@ -234,17 +229,17 @@ def test(model, device, test_loader, loss_function, silent=True):
 
 
 # Models
-class MLPCondensedVariable(nn.Module):
+class MLP(nn.Module):
     """
-    Multi-layer perceptron for non-linear regression.
+    Multi-layer perceptron with variable depth and width
     """
 
-    def __init__(self, input_n, n_hidden_units, output_n, nLayers):
+    def __init__(self, input_n, n_hidden_units, output_n, n_layers):
         super().__init__()
         # Input layer
         layers = [nn.Linear(input_n, n_hidden_units), nn.ReLU()]
         # Hidden layers
-        for _ in range(nLayers):
+        for _ in range(n_layers):
             layers.extend([nn.Linear(n_hidden_units, n_hidden_units), nn.ReLU()])
         # Output layer
         layers.append(nn.Linear(n_hidden_units, output_n))
@@ -252,41 +247,3 @@ class MLPCondensedVariable(nn.Module):
 
     def forward(self, x):
         return self.layers(x)
-
-
-class MLPcondensed(nn.Module):
-    """
-    Multi-layer perceptron for non-linear regression.
-    """
-
-    def __init__(self, input_n, n_hidden_units, output_n):
-        super().__init__()
-        self.layers = nn.Sequential(
-            nn.Linear(input_n, n_hidden_units),
-            nn.ReLU(),
-            nn.Linear(n_hidden_units, n_hidden_units),
-            nn.ReLU(),
-            nn.Linear(n_hidden_units, n_hidden_units),
-            nn.ReLU(),
-            nn.Linear(n_hidden_units, output_n),
-        )
-
-    def forward(self, x):
-        return self.layers(x)
-
-
-class SLPnet(nn.Module):
-    """
-    Single layer perceptron for non-linear regression.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.input = nn.Linear(in_features=3, out_features=9)
-        self.hidden_1 = nn.Linear(in_features=9, out_features=9)
-        self.output = nn.Linear(in_features=9, out_features=1)
-
-    def forward(self, x):
-        x = F.relu(self.input(x))
-        x = F.relu(self.hidden_1(x))
-        return self.output(x)

@@ -9,17 +9,28 @@ import Home
 
 
 @st.cache_data
-def run_poisson_sim(**kwargs):
-    np.random.seed(1)
+def plot_sim(wpm, acc, avg_wpm, avg_acc):
+    fig = plt.figure(figsize=(6, 4))
+    ax, _, _ = plot.sim_scatter_hist(wpm, acc, fig=fig)
+    ax.axvline(avg_wpm, color="grey", linestyle="--", alpha=0.5)
+    ax.axhline(avg_acc, color="grey", linestyle="--", alpha=0.5)
+    ax.plot(np.mean(wpm), np.mean(acc), "ro")
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
+@st.cache_data(show_spinner=False)
+def run_poisson_sim(sim_seed=1, **kwargs):
+    np.random.seed(sim_seed)
     if "silent" not in kwargs:
         kwargs["silent"] = True
     wpm, acc, n_mistakes = util.run_simulation_poisson(**kwargs)
     return wpm, acc, n_mistakes
 
 
-@st.cache_data
-def run_simple_sim(**kwargs):
-    np.random.seed(1)
+@st.cache_data(show_spinner=False)
+def run_simple_sim(sim_seed=1, **kwargs):
+    np.random.seed(sim_seed)
     if "silent" not in kwargs:
         kwargs["silent"] = True
     wpm, acc, n_mistakes = util.run_simulation_simple(**kwargs)
@@ -31,9 +42,6 @@ def main():
 
     # Page configuration
     Home.configure_page(page_title="Simulated typing")
-
-    # Data set up
-    _, _ = Home.load_data()
 
     # Page introduction
     st.title("Simulated typing")
@@ -53,8 +61,26 @@ def main():
         simulations.
         """
     )
+    # Run simulations, with a button to re-run with a new seed
+    avg_wpm = 60
+    avg_acc = 0.95
+    n_trials = 1000
+    st.write("Click the button below to re-run the simulations with a new seed.")
+    seed = st.button("Re-run simulations")
+    if seed:
+        seed = np.random.randint(1e6)
+    else:
+        seed = 1  # Default seed
+    with st.spinner("Running simulations..."):
+        wpm_simple, acc_simple, _ = run_simple_sim(
+            sim_seed=seed, avg_wpm=avg_wpm, avg_acc=avg_acc, n_trials=n_trials
+        )
+        wpm_possion, acc_possion, _ = run_poisson_sim(
+            sim_seed=seed, avg_wpm=avg_wpm, avg_acc=avg_acc, n_trials=n_trials
+        )
     st.divider()
 
+    # Simple simulation
     st.subheader("Simulated typing: random mistake draws")
     st.write(
         """
@@ -70,18 +96,7 @@ def main():
         with a standard deviation of 0.45.
         """
     )
-    # TODO
-    avg_wpm = 60
-    avg_acc = 0.95
-    n_trials = 1000
-    wpm, acc, _ = run_simple_sim(avg_wpm=avg_wpm, avg_acc=avg_acc, n_trials=n_trials)
-    # Plot scatter_hist of wpm and acc
-    fig = plt.figure(figsize=(6, 4))
-    ax, _, _ = plot.sim_scatter_hist(wpm, acc, fig=fig)
-    ax.axvline(avg_wpm, color="grey", linestyle="--", alpha=0.5)
-    ax.axhline(avg_acc, color="grey", linestyle="--", alpha=0.5)
-    ax.plot(np.mean(wpm), np.mean(acc), "ro")
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_sim(wpm_simple, acc_simple, avg_wpm, avg_acc)
     st.write(
         """
         The dashed grey lines show the target WPM and accuracy.
@@ -91,6 +106,7 @@ def main():
     )
     st.divider()
 
+    # Poisson simulation
     st.subheader("Simulated typing: Poisson process")
     st.write(
         """
@@ -102,16 +118,7 @@ def main():
         assume each mistake takes 0.75 seconds to fix.
         """
     )
-    avg_wpm = 60
-    avg_acc = 0.95
-    wpm, acc, _ = run_poisson_sim(avg_wpm=avg_wpm, avg_acc=avg_acc)
-    # Plot scatter_hist of wpm and acc
-    fig = plt.figure(figsize=(6, 4))
-    ax, _, _ = plot.sim_scatter_hist(wpm, acc, fig=fig)
-    ax.axvline(avg_wpm, color="grey", linestyle="--", alpha=0.5)
-    ax.axhline(avg_acc, color="grey", linestyle="--", alpha=0.5)
-    ax.plot(np.mean(wpm), np.mean(acc), "ro")
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_sim(wpm_possion, acc_possion, avg_wpm, avg_acc)
     st.write(
         """
         The dashed grey lines show the target WPM and accuracy.
@@ -121,6 +128,7 @@ def main():
     )
     st.divider()
 
+    # Links to notebooks
     nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/3a_sim_simple.ipynb"
     nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/3b_sim_poisson.ipynb"
     st.write(

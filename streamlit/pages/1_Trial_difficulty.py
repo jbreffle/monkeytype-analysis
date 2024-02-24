@@ -10,7 +10,7 @@ import Home
 def plot_log_fit(data_df, y_label, n_trial_types=1):
     fig = plt.figure(figsize=(6, 3))
     ax = plot.log_fit_scatter(
-        data_df, "wpm", silent=True, legend_on=False, n_trial_types=n_trial_types
+        data_df, y_label, silent=True, legend_on=False, n_trial_types=n_trial_types
     )
     ax.set_title("")
     st.pyplot(fig, use_container_width=True, transparent=True)

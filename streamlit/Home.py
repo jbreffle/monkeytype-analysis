@@ -31,26 +31,26 @@ def user_upload_form():
     # Check if processed user data already exists in session state
     user_processed_df = st.session_state.get("user_processed_df", None)
     data_df = st.session_state.get("data_df", None)
-    with st.form("User file upload form"):
-        uploaded_files = st.file_uploader(
-            "Upload your own Monkeytype `results.csv` file to analyze your own data.",
-            accept_multiple_files=False,
-            type=["csv"],
-            key="user_file_upload",
-        )
-        submit_button = st.form_submit_button(label="Process user's raw data")
-        if submit_button and uploaded_files is not None:
-            user_raw_df = pd.read_csv(uploaded_files, sep="|")
-            try:
-                user_processed_df = process.process_combined_results(user_raw_df)
-            except Exception as _:
-                pass
-            user_data_is_valid = util.validate_user_data(data_df, user_processed_df)
-            if user_data_is_valid:
-                st.session_state.user_raw_df = user_raw_df
-                st.session_state.user_processed_df = user_processed_df
-            else:
-                st.warning("User data is not in the expected format.")
+    uploaded_file = st.file_uploader(
+        "Upload your own Monkeytype `results.csv` file to analyze your own data.",
+        accept_multiple_files=False,
+        type=["csv"],
+        key="user_file_upload",
+    )
+    if uploaded_file is not None and user_processed_df is None:
+        user_raw_df = pd.read_csv(uploaded_file, sep="|")
+        try:
+            user_processed_df = process.process_combined_results(user_raw_df)
+        except Exception as _:
+            pass
+        user_data_is_valid = util.validate_user_data(data_df, user_processed_df)
+        if user_data_is_valid:
+            st.session_state.user_raw_df = user_raw_df
+            st.session_state.user_processed_df = user_processed_df
+        else:
+            st.warning("User data is not in the expected format.")
+    elif uploaded_file is None:
+        st.session_state.user_processed_df = None
     return user_processed_df
 
 
@@ -284,7 +284,6 @@ def main():
         All plots on this page can analyze any uploaded Monkeytype data file.
         """
     )
-    # TODO streamline and move into function
     user_processed_df = user_upload_form()
     # Use expander to show users uploaded file
     with st.expander("User resutlts file", expanded=False):

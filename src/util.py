@@ -225,7 +225,9 @@ def add_log_norm_wpm(df, min_n_trials=10):
     and applying calculations per group, rather than per row.
     """
     # Initialize the column to avoid SettingWithCopyWarning
-    df["log_norm_wpm"] = 0
+    if "log_norm_wpm" not in df.columns:
+        df["log_norm_wpm"] = 0.0  # Initializes the column with a default float value
+    df["log_norm_wpm"] = df["log_norm_wpm"].astype(float)
 
     # Group by 'combined_id' and loop over each group
     for combined_id, group in df.groupby("combined_id"):

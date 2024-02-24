@@ -6,6 +6,43 @@ from src import plot
 import Home
 
 
+@st.cache_data
+def plot_log_fit(data_df, y_label, n_trial_types=1):
+    fig = plt.figure(figsize=(6, 3))
+    ax = plot.log_fit_scatter(
+        data_df, "wpm", silent=True, legend_on=False, n_trial_types=n_trial_types
+    )
+    ax.set_title("")
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
+@st.cache_data
+def plot_scatter(data_df, x_label, y_label, n_colors=5):
+    fig = plt.figure(figsize=(6, 3))
+    _ = plot.df_scatter(
+        data_df, x_label, y_label, plot_regression=False, s=3, n_colors=n_colors
+    )
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
+@st.cache_data
+def plot_trial_type_hist(data_df):
+    fig = plt.figure(figsize=(6, 3))
+    ax = plt.gca()
+    ax.hist(
+        data_df["trial_type_id"],
+        bins=data_df["trial_type_id"].nunique(),
+        edgecolor="black",
+        align="left",
+    )
+    ax.set_xlabel("Trial type ID (sorted)")
+    ax.set_ylabel("Trials completed (count)")
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
 def main():
     """Trial difficulty page.
     Shows trial types, z-scoring, and log-fit normalization.
@@ -64,13 +101,13 @@ def main():
         value=False,
     )
     if use_user_data:
-        # Give warning if user data is not uploaded
         if user_processed_df is None:
             st.warning("No user data uploaded yet. See Home page.")
         else:
             data_df = user_processed_df
     st.divider()
 
+    # Comparing trials of different difficulty
     st.subheader("Comparing trials of different difficulty")
     st.write(
         """
@@ -79,9 +116,7 @@ def main():
         suggesting that the user is completing trials of different difficulty.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.df_scatter(data_df, "datetime", "wpm", plot_regression=False, s=3)
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_scatter(data_df, "datetime", "wpm", n_colors=1)
     st.write(
         """
         By defining a trial type as a unique combination of all trial options,
@@ -93,18 +128,7 @@ def main():
         the most trials completed.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plt.gca()
-    ax.hist(
-        data_df["trial_type_id"],
-        bins=data_df["trial_type_id"].nunique(),
-        edgecolor="black",
-        align="left",
-    )
-    ax.set_xlabel("Trial type ID (sorted)")
-    ax.set_ylabel("Trials completed (count)")
-    st.pyplot(fig, use_container_width=True, transparent=True)
-    # Coloring by trial type
+    plot_trial_type_hist(data_df)
     st.write(
         """
         Now that we have defined trial types,
@@ -114,18 +138,15 @@ def main():
         and the rest are labeled in grey.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.df_scatter(
-        data_df, "datetime", "wpm", plot_regression=False, s=3, n_colors=5
-    )
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_scatter(data_df, "datetime", "wpm", n_colors=5)
     st.divider()
 
     # Z-scoring
     st.subheader("Z-scoring by trial type")
     st.write(
-        """
-        Z-scoring is a way of normalizing data to compare across different distributions.
+        r"""
+        Z-scoring is a way of normalizing data to compare across different
+        distributions.
         We can Z-score the WPM for each trial type to compare them.
         Z-scoring involves shifting the mean of the data to 0
         and scaling the standard deviation to 1,
@@ -139,11 +160,7 @@ def main():
         and $z$ is the resulting z-scored value.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.df_scatter(
-        data_df, "datetime", "z_wpm", plot_regression=False, s=3, n_colors=5
-    )
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_scatter(data_df, "datetime", "z_wpm", n_colors=5)
     st.write(
         """
         There is a problem with our use of z-scoring,
@@ -155,6 +172,7 @@ def main():
     )
     st.divider()
 
+    # Logarithmic learning curves
     st.subheader("Logarithmic learning curves")
     st.write(
         r"""A standard model for skill learning is that the rate of improvement
@@ -176,32 +194,21 @@ def main():
         for the trial type with the most trials completed.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.log_fit_scatter(
-        data_df, "wpm", silent=True, legend_on=False, n_trial_types=1
-    )
-    ax.set_title("")
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_log_fit(data_df, "wpm", n_trial_types=1)
     st.write(
         """
         Here is a similar plot,
         but showing the four most common trial types.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.log_fit_scatter(
-        data_df, "wpm", silent=True, legend_on=False, n_trial_types=4
-    )
-    ax.set_title("")
-    st.pyplot(fig, use_container_width=True, transparent=True)
-    # Log-fit normalized WPM
+    plot_log_fit(data_df, "wpm", n_trial_types=4)
     st.write(
-        """
+        r"""
         Rather than z-scoring to make the mean 0 and the standard deviation 1,
         we can normalize the data based on the fitted log curve.
         We will use the fitted log curve to perform the normalization
         $$
-        y = \\frac{x - c}{\sigma_{res}}
+        y = \frac{x - c}{\sigma_{res}}
         $$
         where $y$ is the log-fit normalized value,
         $x$ is the original value,
@@ -212,27 +219,13 @@ def main():
         Those normalized values are show in the following plot.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.df_scatter(
-        data_df,
-        "trial_type_num",
-        "log_norm_wpm",
-        plot_regression=False,
-        s=3,
-        n_colors=5,
-    )
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    plot_scatter(data_df, "trial_type_num", "log_norm_wpm", n_colors=5)
     st.write(
         """
         Here are the same data, but plotted across time.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.df_scatter(
-        data_df, "datetime", "log_norm_wpm", plot_regression=False, s=3, n_colors=5
-    )
-    st.pyplot(fig, use_container_width=True, transparent=True)
-
+    plot_scatter(data_df, "datetime", "log_norm_wpm", n_colors=5)
     st.write(
         """
         When we plot across time
@@ -242,9 +235,9 @@ def main():
         How can we account for this?
         """
     )
-
     st.divider()
 
+    # Links to notebooks
     nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/2a_z_scoring.ipynb"
     nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/2b_learning_curve.ipynb"
     st.write(

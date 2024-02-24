@@ -26,6 +26,100 @@ GH_ICON_PATH = os.path.join(
 )
 
 
+def user_upload_form():
+    """Handle the upload and processing of user data."""
+    # Check if processed user data already exists in session state
+    user_processed_df = st.session_state.get("user_processed_df", None)
+    data_df = st.session_state.get("data_df", None)
+    with st.form("User file upload form"):
+        uploaded_files = st.file_uploader(
+            "Upload your own Monkeytype `results.csv` file to analyze your own data.",
+            accept_multiple_files=False,
+            type=["csv"],
+            key="user_file_upload",
+        )
+        submit_button = st.form_submit_button(label="Process user's raw data")
+        if submit_button and uploaded_files is not None:
+            user_raw_df = pd.read_csv(uploaded_files, sep="|")
+            try:
+                user_processed_df = process.process_combined_results(user_raw_df)
+            except Exception as _:
+                pass
+            user_data_is_valid = util.validate_user_data(data_df, user_processed_df)
+            if user_data_is_valid:
+                st.session_state.user_raw_df = user_raw_df
+                st.session_state.user_processed_df = user_processed_df
+            else:
+                st.warning("User data is not in the expected format.")
+    return user_processed_df
+
+
+@st.cache_resource
+def plot_feature_scatter(data_df, feature_x, feature_y, trial_type=None):
+    fig = plt.figure(figsize=(5, 3))
+    _ = plot.df_scatter(
+        data_df,
+        feature_x,
+        feature_y,
+        trial_type_id=trial_type,
+        plot_regression=True,
+        s=3,
+    )
+    return fig
+
+
+@st.cache_resource
+def plot_time_scatter(data_df, feature, trial_type=None):
+    fig = plt.figure(figsize=(5, 3))
+    _ = plot.df_scatter(
+        data_df,
+        "datetime",
+        feature,
+        trial_type_id=trial_type,
+        plot_regression=True,
+        s=3,
+    )
+    return fig
+
+
+@st.cache_data
+def get_scatter_options_df(feature_name_df):
+    scatter_options_df = feature_name_df[
+        feature_name_df["column_name"].isin(
+            [
+                "acc",
+                "z_acc",
+                "consistency",
+                "is_pb",
+                "raw_wpm",
+                "test_duration",
+                "time_of_day_sec",
+                "trial_type_num",
+                "wpm",
+                "z_wpm",
+            ]
+        )
+    ]
+    return scatter_options_df
+
+
+@st.cache_data
+def get_feature_name_df(data_df):
+    feature_name_df = pd.DataFrame(
+        {
+            "column_name": data_df.columns.values,
+            "feature_name": [
+                util.get_label_string(str) for str in data_df.columns.values
+            ],
+        }
+    )
+    feature_name_df.sort_values(
+        "feature_name", inplace=True, key=lambda col: col.str.lower()
+    )
+    feature_name_df.reset_index(drop=True, inplace=True)
+    return feature_name_df
+
+
 def add_sidebar_links():
     column_dimensions = [0.6, 3.4]
     with st.sidebar:
@@ -133,11 +227,6 @@ def load_data():
     return loaded_df, user_processed_df
 
 
-@st.cache_data
-def user_upload_form():
-    raise NotImplementedError
-
-
 def main():
     """Main script for Home.py"""
 
@@ -146,34 +235,8 @@ def main():
 
     # Data set up
     data_df, user_processed_df = load_data()
-    feature_name_df = pd.DataFrame(
-        {
-            "column_name": data_df.columns.values,
-            "feature_name": [
-                util.get_label_string(str) for str in data_df.columns.values
-            ],
-        }
-    )
-    feature_name_df.sort_values(
-        "feature_name", inplace=True, key=lambda col: col.str.lower()
-    )
-    feature_name_df.reset_index(drop=True, inplace=True)
-    scatter_options_df = feature_name_df[
-        feature_name_df["column_name"].isin(
-            [
-                "acc",
-                "z_acc",
-                "consistency",
-                "is_pb",
-                "raw_wpm",
-                "test_duration",
-                "time_of_day_sec",
-                "trial_type_num",
-                "wpm",
-                "z_wpm",
-            ]
-        )
-    ]
+    feature_name_df = get_feature_name_df(data_df)
+    scatter_options_df = get_scatter_options_df(feature_name_df)
 
     # Introduction
     st.title("monkeytype.com Data Analysis")
@@ -221,36 +284,16 @@ def main():
         All plots on this page can analyze any uploaded Monkeytype data file.
         """
     )
-    if "user_processed_df" in st.session_state:
-        user_processed_df = st.session_state.user_processed_df
-    with st.form("User file upload form"):
-        uploaded_files = st.file_uploader(
-            "Upload your own Monkeytype `results.csv` file to analyze your own data.",
-            accept_multiple_files=False,
-            type=["csv"],
-            key="user_file_upload",
-        )
-        submit_button = st.form_submit_button(label="Process user's raw data")
-        if submit_button and uploaded_files is not None:
-            user_raw_df = pd.read_csv(uploaded_files, sep="|")
-            try:
-                user_processed_df = process.process_combined_results(user_raw_df)
-            except Exception as e:
-                pass
-            user_data_is_valid = util.validate_user_data(data_df, user_processed_df)
-            if user_data_is_valid:
-                st.session_state.user_raw_df = user_raw_df
-                st.session_state.user_processed_df = user_processed_df
-            else:
-                st.warning("User data is not in the expected format.")
-        # Use expander to show users uploaded file
-        with st.expander("User resutlts file", expanded=False):
-            # If user_processed_df does not exist, show message
-            if user_processed_df is None:
-                st.write("No file uploaded and processed yet.")
-            else:
-                st.write("Processed user data")
-                st.dataframe(user_processed_df)
+    # TODO streamline and move into function
+    user_processed_df = user_upload_form()
+    # Use expander to show users uploaded file
+    with st.expander("User resutlts file", expanded=False):
+        # If user_processed_df does not exist, show message
+        if user_processed_df is None:
+            st.write("No file uploaded and processed yet.")
+        else:
+            st.write("Processed user data")
+            st.dataframe(user_processed_df)
     use_user_data = st.checkbox(
         """Check this box to use your uploaded data in the analyses,
         or leave it unchecked to use the app's example data.""",
@@ -262,6 +305,7 @@ def main():
             st.warning("No user data uploaded yet.")
         else:
             data_df = user_processed_df
+
     st.divider()
 
     # Scatter and regression across time
@@ -273,7 +317,6 @@ def main():
         You can also select a trial type to plot a subset of the data.
         """
     )
-    # Selectbox for scatter
     option_default_index = int(
         np.where(scatter_options_df["column_name"] == "wpm")[0][0]
     )
@@ -284,7 +327,6 @@ def main():
             scatter_options_df["feature_name"],
             index=option_default_index,
         )
-    # Option to plot by trial type
     trial_options = [None] + sorted(data_df["trial_type_id"].unique())
     with time_scatter_columns[1]:
         trial_type = st.selectbox(
@@ -292,20 +334,10 @@ def main():
             trial_options,
             index=None,
         )
-    # Scatter plot
     column_to_plot = scatter_options_df.loc[
         scatter_options_df["feature_name"] == feature_to_plot, "column_name"
     ].values[0]
-    fig = plt.figure(figsize=(5, 3))
-
-    _ = plot.df_scatter(
-        data_df,
-        "datetime",
-        column_to_plot,
-        trial_type_id=trial_type,
-        plot_regression=True,
-        s=3,
-    )
+    fig = plot_time_scatter(data_df, column_to_plot, trial_type)
     st.pyplot(fig, use_container_width=True, transparent=True)
     st.divider()
 
@@ -319,7 +351,6 @@ def main():
         You can also select a trial type to plot a subset of the data.
         """
     )
-    # Selectbox for scatter
     option_default_index_x = int(
         np.where(scatter_options_df["column_name"] == "acc")[0][0]
     )
@@ -339,7 +370,6 @@ def main():
             scatter_options_df["feature_name"],
             index=option_default_index_y,
         )
-        # Option to plot by trial type
     with scatter_corr_columns[2]:
         trial_type_2 = st.selectbox(
             "Select to plot a trial-type subset",
@@ -347,22 +377,13 @@ def main():
             index=None,
             key="trial_type_2",
         )
-    # Scatter plot
     column_x = scatter_options_df.loc[
         scatter_options_df["feature_name"] == feature_x, "column_name"
     ].values[0]
     column_y = scatter_options_df.loc[
         scatter_options_df["feature_name"] == feature_y, "column_name"
     ].values[0]
-    fig = plt.figure(figsize=(5, 3))
-    _ = plot.df_scatter(
-        data_df,
-        column_x,
-        column_y,
-        trial_type_id=trial_type_2,
-        plot_regression=True,
-        s=3,
-    )
+    fig = plot_feature_scatter(data_df, column_x, column_y, trial_type_2)
     st.pyplot(fig, use_container_width=True, transparent=True)
     st.divider()
 

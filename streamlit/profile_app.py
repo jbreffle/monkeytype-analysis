@@ -13,8 +13,7 @@ import Home
 
 streamlit_pages_dir = pyprojroot.here("streamlit/pages")
 streamlit_logs_dir = pyprojroot.here("streamlit/logs")
-
-# TODO Profile all pages: all at once, or take page name as argument?
+date_time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
 def profile_all_pages():
@@ -25,20 +24,16 @@ def profile_all_pages():
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
             spec.loader.exec_module(module)
-
             profiler = cProfile.Profile()
             profiler.enable()
-
             if hasattr(module, "main"):
                 module.main()
             else:
                 print(f"No main() found in {module_name}")
 
             profiler.disable()
-
             # Ensure the logs directory exists
             streamlit_logs_dir.mkdir(parents=True, exist_ok=True)
-            date_time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             output_file = (
                 streamlit_logs_dir / f"profile_{date_time_str}_{module_name}.txt"
             )
@@ -48,16 +43,13 @@ def profile_all_pages():
 
 
 def profile_home_page():
-
     # Run the profiler
     profiler = cProfile.Profile()
     profiler.enable()
     Home.main()
     profiler.disable()
-
     # Writing the stats to a file, with datetime in the filename
-    date_time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    output_file = streamlit_logs_dir / f"profile_{date_time_str}_Home.txt"
+    output_file = streamlit_logs_dir / f"profile_{date_time_str}_0_Home.txt"
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w", encoding="utf-8") as stream:
         stats = pstats.Stats(profiler, stream=stream).sort_stats("cumtime")

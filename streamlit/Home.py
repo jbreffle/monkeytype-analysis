@@ -285,7 +285,6 @@ def main():
         """
     )
     user_processed_df = user_upload_form()
-    # Use expander to show users uploaded file
     with st.expander("User resutlts file", expanded=False):
         # If user_processed_df does not exist, show message
         if user_processed_df is None:
@@ -299,12 +298,10 @@ def main():
         value=False,
     )
     if use_user_data:
-        # Give warning if user data is not uploaded
         if user_processed_df is None:
             st.warning("No user data uploaded yet.")
         else:
             data_df = user_processed_df
-
     st.divider()
 
     # Scatter and regression across time
@@ -386,6 +383,7 @@ def main():
     st.pyplot(fig, use_container_width=True, transparent=True)
     st.divider()
 
+    # Link to notebook
     nb_url = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/1_explore.ipynb"
     st.write(
         f"""

@@ -13,7 +13,42 @@ import Home
 MODEL_PATH = pyprojroot.here("streamlit/streamlit-data/")
 
 
-@st.cache_resource
+@st.cache_data
+def plot_model_feature_scatter(actual_values, predicted_values, _x_test):
+    fig = plt.figure(figsize=(6, 3))
+    fig, _, _ = plot.model_feature_scatter(
+        actual_values, predicted_values, _x_test, fig=fig
+    )
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
+@st.cache_data
+def plot_model_scatter(actual_values, predicted_values):
+    fig = plt.figure(figsize=(6, 3))
+    _ = plot.model_scatter(actual_values, predicted_values)
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
+@st.cache_data
+def plot_model_loss(train_loss, test_loss):
+    fig = plt.figure(figsize=(6, 3))
+    _ = plot.model_loss(train_loss, test_loss)
+    st.pyplot(fig, use_container_width=True, transparent=True)
+    return None
+
+
+@st.cache_resource(show_spinner=False)
+def load_predictions(_model, _x_test, _y_test):
+    """Load predictions from a model."""
+    # Predictions
+    predicted_values = _model(_x_test)
+    actual_values = _y_test
+    return predicted_values.cpu().detach().numpy(), actual_values.cpu().detach().numpy()
+
+
+@st.cache_resource(show_spinner=False)
 def load_model(model_path=MODEL_PATH):
     """Load a model from disk."""
     device = "cpu"  # No cuda on streamlit community cloud
@@ -22,13 +57,13 @@ def load_model(model_path=MODEL_PATH):
     )
     train_loss = np.load(model_path / "streamlit_train_loss.npy")
     test_loss = np.load(model_path / "streamlit_test_loss.npy")
-    X_test = np.load(model_path / "X_test.npy")
+    x_test = np.load(model_path / "X_test.npy")
     y_test = np.load(model_path / "y_test.npy")
     # Select device
     model.to(device)
-    X_test = torch.tensor(X_test, dtype=torch.float).to(device)
+    x_test = torch.tensor(x_test, dtype=torch.float).to(device)
     y_test = torch.tensor(y_test, dtype=torch.float).to(device)
-    return model, train_loss, test_loss, X_test, y_test
+    return model, train_loss, test_loss, x_test, y_test
 
 
 def main():
@@ -36,9 +71,6 @@ def main():
 
     # Page configuration
     Home.configure_page(page_title="Predicting performance")
-
-    # Data set up
-    data_df, _ = Home.load_data()
 
     # Page introduction
     st.title("Predicting performance")
@@ -52,6 +84,7 @@ def main():
     )
     st.divider()
 
+    # Network loss and predictions
     st.subheader("Neural network model")
     st.write(
         """
@@ -68,12 +101,11 @@ def main():
         Here are the Train and Test losses over time from training one such network:
         """
     )
-    model, train_loss, test_loss, X_test, y_test = load_model()
-    # Plot losses over time
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.model_loss(train_loss, test_loss)
-    st.pyplot(fig, use_container_width=True, transparent=True)
-    # Plot actual vs predicted
+    with st.spinner("Loading model..."):
+        model, train_loss, test_loss, x_test, y_test = load_model()
+        predicted_values, actual_values = load_predictions(model, x_test, y_test)
+        x_test = x_test.cpu()
+    plot_model_loss(train_loss, test_loss)
     st.write(
         """        
         We are able to predict the user's typing speed with a reasonable degree of
@@ -81,13 +113,7 @@ def main():
         Here is the predicted typing speed vs. the actual typing speed for the test set:
         """
     )
-    test_predictions = model(X_test)
-    fig = plt.figure(figsize=(6, 3))
-    ax = plot.model_scatter(
-        y_test.cpu().detach().numpy(), test_predictions.cpu().detach().numpy()
-    )
-    st.pyplot(fig, use_container_width=True, transparent=True)
-    # Plot actual and predicted across feature values
+    plot_model_scatter(actual_values, predicted_values)
     st.write(
         """
         Here is the same data, but now we are plotting the actual values in blue
@@ -96,15 +122,10 @@ def main():
         trial types.
         """
     )
-    fig = plt.figure(figsize=(6, 3))
-    fig, ax0, ax1 = plot.model_feature_scatter(
-        y_test.cpu(), test_predictions.detach().cpu().numpy(), X_test.cpu(), fig=fig
-    )
-    # Remove legend background
-    st.pyplot(fig, use_container_width=True, transparent=True)
-
+    plot_model_feature_scatter(actual_values, predicted_values, x_test)
     st.divider()
 
+    # Links to notebooks
     nb_url_1 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/4_nn_predict.ipynb"
     nb_url_2 = "https://github.com/jbreffle/monkeytype-analysis/blob/main/notebooks/5_nn_hyperopti.ipynb"
     st.write(

@@ -31,24 +31,16 @@ def test_home():
 
 
 def test_all_pages():
-    """Loop over all streamlit files in streamlit/pages/ and check for runtime errors"""
+    """Loop over all .py files in streamlit/pages/ and check for runtime errors."""
+    for name in os.listdir(streamlit_pages_dir):
+        path = os.path.join(streamlit_pages_dir, name)
 
-    # Loop over all files in streamlit/pages
-    for _, file in enumerate(os.listdir(streamlit_pages_dir)):
-        # Skip __init__.py
-        if file == "__init__.py":
+        # Skip directories (including __pycache__) and non-.py files
+        if not os.path.isfile(path) or not name.endswith(".py"):
+            continue
+        if name == "__init__.py":
             continue
 
         # Run the app
-        at = AppTest.from_file(
-            f"{streamlit_pages_dir}/{file}", default_timeout=30
-        ).run()
-
-        # Check that it runs without error
-        assert not at.exception
-
-        # Check that "blind_mode_df" is in st.session_state
-        # Note: commented out since not all pages are completed yet
-        # assert "blind_mode_df" in at.session_state
-
-    return
+        at = AppTest.from_file(path, default_timeout=30).run()
+        assert not at.exception, f"Exception raised in {name}"

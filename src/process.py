@@ -1,18 +1,17 @@
-"""Module for processing monkeytype data
-"""
+"""Module for processing monkeytype data"""
 
 # Imports
+import glob
+import hashlib
 import os
 from pathlib import Path
-import hashlib
-import glob
 
-import boto3
-from dotenv import load_dotenv
 import pandas as pd
-import pyprojroot
-import yaml
 import pyarrow.parquet as pq
+import pyprojroot
+import requests
+import yaml
+from dotenv import load_dotenv
 
 from src import util
 
@@ -31,26 +30,50 @@ Path(RAW_DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
 SILENT_DEFAULT = True
 SESSION_THRESHOLD_DEFAULT = 600  # seconds between trials to define a new session
-
+DEFAULT_TIMEOUT = 10  # seconds
 
 # Load environment variables
 load_dotenv()
 
-AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-AWS_RAW_DATA_FOLDER = os.path.join(
-    "s3://", AWS_S3_BUCKET, config["RAW_DATA_FOLDER"].replace("./", "")
-)
+# GitHub credentials and repo info (repo is private, so you'll need a token)
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+GITHUB_OWNER = "jbreffle"
+GITHUB_REPO = "monkeytype-data"
+GITHUB_BRANCH = "main"  # or whatever branch is relevant
+# Base URL for raw files in your repo
+RAW_BASE_URL = f"https://raw.githubusercontent.com/{GITHUB_OWNER}/{GITHUB_REPO}/{GITHUB_BRANCH}/data/raw"
 
 
-# AWS S3 client
-session = boto3.Session(
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-)
-s3 = session.resource("s3")
-my_bucket = s3.Bucket("monkeytype-analysis")
+def download_datafiles_from_github():
+    """Download all .psv and .csv files from 'data/raw' in the GitHub repo into
+    RAW_DATA_FOLDER.
+    Returns a list of local file paths."""
+    base_url = (
+        f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/contents/data/raw"
+    )
+    headers = {}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"Bearer {GITHUB_TOKEN}"
+
+    resp = requests.get(base_url, headers=headers)
+    resp.raise_for_status()
+    items = resp.json()
+
+    downloaded_paths = []
+    for item in items:
+        if item["type"] == "file" and (
+            item["name"].endswith(".csv") or item["name"].endswith(".psv")
+        ):
+            file_url = item["download_url"]
+            file_resp = requests.get(file_url, headers=headers)
+            file_resp.raise_for_status()
+
+            local_path = os.path.join(RAW_DATA_FOLDER, item["name"])
+            with open(local_path, "w", encoding="utf-8") as f:
+                f.write(file_resp.text)
+            downloaded_paths.append(local_path)
+
+    return downloaded_paths
 
 
 # Functions
@@ -87,80 +110,55 @@ def parse_processesd_file_pattern(file_name_pattern=COMBINED_DATA_PATH_PATTERN):
 def combine_raw_results(
     raw_data_folder=RAW_DATA_FOLDER,
     processed_data_folder=PROCESSED_DATA_FOLDER,
-    silent=SILENT_DEFAULT,
-    force_aws_data=False,
-    aws_raw_data_folder=AWS_RAW_DATA_FOLDER,
+    silent=True,
+    force_github_data=False,
 ):
-    """Merge all results files from /data/raw/ into one .csv file."""
-    # 0) Decide if loading locally or from AWS
-    # Are there files that match the pattern os.path.join(raw_data_folder, "results-*.csv")?
-    local_raw_data_exists = (
-        len(glob.glob(os.path.join(raw_data_folder, "results-*.csv"))) > 0
-    )
-    if local_raw_data_exists and not force_aws_data:
-        # 1) Identify the desired file based on hash of the file names
-        # Get all file_names in /data/raw/ that match the format 'results-*.csv'
-        path = os.path.join(raw_data_folder, "results-*.csv")
-        raw_file_paths = glob.glob(path)
-    else:
-        # Switch from local to AWS stored data
-        raw_data_folder = os.path.normpath(aws_raw_data_folder)
-        # Get all file_names in /data/raw/ that match the format 'results-*.csv'
-        path = os.path.join(raw_data_folder, "results-*.csv")
-        raw_files = [
-            my_bucket_object.key
-            for my_bucket_object in my_bucket.objects.filter(Prefix="data/raw/")
-            if "results-" in my_bucket_object.key
-        ]
-        raw_file_paths = [f"s3://{AWS_S3_BUCKET}/{file}" for file in raw_files]
-        if not silent:
-            print(f"Loading raw data from {raw_data_folder} on AWS.")
+    """Merge all .psv and .csv results files from data/raw/ into one combined file (.csv + .parquet)."""
 
-    # Extract just the filenames, dropping the path and extensions in one line
-    raw_file_names = [os.path.splitext(os.path.basename(f))[0] for f in raw_file_paths]
-    raw_file_names = sorted(raw_file_names, key=lambda x: str(x))
-    # Create an 8 digit hash of the file names
-    hash_str = hashlib.md5("".join(raw_file_names).encode()).hexdigest()[:8]
-    # Create a new file name for the combined results file
-    # combined-results-<number of raw files>-<hash of raw file names>.csv
-    combined_file_name = f"combined-results-{len(raw_file_paths)}-{hash_str}.csv"
-    combined_file_path = os.path.join(processed_data_folder, combined_file_name)
+    # 1) Check if local data already exists
+    local_paths = glob.glob(os.path.join(raw_data_folder, "*.csv"))
+    local_paths += glob.glob(os.path.join(raw_data_folder, "*.psv"))
+    local_data_exists = len(local_paths) > 0
 
-    # 2) If combined_file_name exists then load it, otherwise create it
-    if os.path.exists(combined_file_path):
-        if not silent:
-            print(
-                f"File {combined_file_name} already exists in {processed_data_folder}."
-            )
-        return None
+    # 2) Decide whether to use local or GitHub data
+    if local_data_exists and not force_github_data:
+        raw_file_paths = local_paths
     else:
-        # Load and combine all of the files into one dataframe
-        if local_raw_data_exists and not force_aws_data:
-            df = pd.concat(
-                [pd.read_csv(f, sep="|") for f in raw_file_paths], ignore_index=True
-            )
-        else:  # Load from AWS
-            df = pd.concat(
-                [
-                    pd.read_csv(
-                        f,
-                        storage_options={
-                            "key": AWS_ACCESS_KEY_ID,
-                            "secret": AWS_SECRET_ACCESS_KEY,
-                        },
-                        sep="|",
-                    )
-                    for f in raw_file_paths
-                ],
-                ignore_index=True,
-            )
-        df = df.drop_duplicates()  # Remove duplicate rows
-        df.to_csv(combined_file_path, index=False, sep="|")
-        # Also to parquett
-        df.to_parquet(combined_file_path.replace(".csv", ".parquet"))
+        Path(raw_data_folder).mkdir(parents=True, exist_ok=True)
+        raw_file_paths = download_datafiles_from_github()
         if not silent:
-            print(f"File {combined_file_name} created in {processed_data_folder}.")
-    return None
+            print(f"Downloaded {len(raw_file_paths)} files from GitHub.")
+
+    # 3) Compute a hash of the file names to create a unique combined filename
+    file_names_no_ext = [
+        os.path.splitext(os.path.basename(p))[0] for p in raw_file_paths
+    ]
+    file_names_no_ext = sorted(file_names_no_ext)
+    hash_str = hashlib.md5("".join(file_names_no_ext).encode()).hexdigest()[:8]
+    combined_name = f"combined-results-{len(raw_file_paths)}-{hash_str}.csv"
+    combined_path = os.path.join(processed_data_folder, combined_name)
+
+    # 4) If already combined, return early
+    if os.path.exists(combined_path):
+        if not silent:
+            print(f"File {combined_name} already exists in {processed_data_folder}.")
+        return
+
+    # 5) Otherwise read each file with the proper delimiter and combine
+    df_list = []
+    for fpath in raw_file_paths:
+        if fpath.endswith(".psv"):
+            df_list.append(pd.read_csv(fpath, sep="|"))
+        elif fpath.endswith(".csv"):
+            df_list.append(pd.read_csv(fpath, sep=","))
+    df = pd.concat(df_list, ignore_index=True).drop_duplicates()
+    df["mode2"] = df["mode2"].astype(str)  #  errors when saving to parquet
+
+    # 6) Write out combined data
+    df.to_csv(combined_path, index=False)
+    df.to_parquet(combined_path.replace(".csv", ".parquet"))
+    if not silent:
+        print(f"Created {combined_name} in {processed_data_folder}.")
 
 
 def process_combined_results(

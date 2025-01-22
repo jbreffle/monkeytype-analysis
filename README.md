@@ -3,7 +3,7 @@
 In depth analysis and modeling of personal typing test data from
 [monkeytype](<https://monkeytype.com/>)
 with an interactive streamlit
-[jbreffle.github.io/monkeytype-app](<https://jbreffle.github.io/monkeytype-app>).
+[jbreffle.github.io/monkeytype-app](<https://monkeytype-analysis.streamlit.app/>).
 
 ## Usage notes for local development
 

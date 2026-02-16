@@ -129,7 +129,7 @@ def add_sidebar_links():
                 " jbreffle.github.io   ",
                 "https://jbreffle.github.io/",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
             )
         logo_column_2 = st.columns(column_dimensions)
         with logo_column_2[0]:
@@ -139,7 +139,7 @@ def add_sidebar_links():
                 "github.com/jbreffle",
                 "https://github.com/jbreffle",
                 type="primary",
-                use_container_width=True,
+                width="stretch",
             )
     return
 
@@ -332,7 +332,7 @@ def main():
         scatter_options_df["feature_name"] == feature_to_plot, "column_name"
     ].values[0]
     fig = plot_time_scatter(data_df, column_to_plot, trial_type)
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     st.divider()
 
     # Correlate features, independent of time
@@ -378,7 +378,7 @@ def main():
         scatter_options_df["feature_name"] == feature_y, "column_name"
     ].values[0]
     fig = plot_feature_scatter(data_df, column_x, column_y, trial_type_2)
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     st.divider()
 
     # Link to notebook

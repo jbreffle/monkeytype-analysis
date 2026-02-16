@@ -15,7 +15,7 @@ def plot_sim(wpm, acc, avg_wpm, avg_acc):
     ax.axvline(avg_wpm, color="grey", linestyle="--", alpha=0.5)
     ax.axhline(avg_acc, color="grey", linestyle="--", alpha=0.5)
     ax.plot(np.mean(wpm), np.mean(acc), "ro")
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 

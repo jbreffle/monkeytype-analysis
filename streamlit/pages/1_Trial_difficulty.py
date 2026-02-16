@@ -13,7 +13,7 @@ def plot_log_fit(data_df, y_label, n_trial_types=1):
         data_df, y_label, silent=True, legend_on=False, n_trial_types=n_trial_types
     )
     ax.set_title("")
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 
@@ -23,7 +23,7 @@ def plot_scatter(data_df, x_label, y_label, n_colors=5):
     _ = plot.df_scatter(
         data_df, x_label, y_label, plot_regression=False, s=3, n_colors=n_colors
     )
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 
@@ -39,7 +39,7 @@ def plot_trial_type_hist(data_df):
     )
     ax.set_xlabel("Trial type ID (sorted)")
     ax.set_ylabel("Trials completed (count)")
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 
@@ -71,7 +71,7 @@ def main():
     st.image(
         str(pyprojroot.here("./assets/english_600x150.png")),
         caption="Example of an English trial from monkeytype.com",
-        use_column_width=True,
+        width="stretch",
     )
     st.write(
         """
@@ -82,7 +82,7 @@ def main():
     st.image(
         str(pyprojroot.here("./assets/ascii_600x150.png")),
         caption="Example of an ASCII trial from monkeytype.com",
-        use_column_width=True,
+        width="stretch",
     )
     st.write(
         """

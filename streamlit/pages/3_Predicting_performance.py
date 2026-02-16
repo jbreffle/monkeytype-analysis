@@ -19,7 +19,7 @@ def plot_model_feature_scatter(actual_values, predicted_values, _x_test):
     fig, _, _ = plot.model_feature_scatter(
         actual_values, predicted_values, _x_test, fig=fig
     )
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 
@@ -27,7 +27,7 @@ def plot_model_feature_scatter(actual_values, predicted_values, _x_test):
 def plot_model_scatter(actual_values, predicted_values):
     fig = plt.figure(figsize=(6, 3))
     _ = plot.model_scatter(actual_values, predicted_values)
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 
@@ -35,7 +35,7 @@ def plot_model_scatter(actual_values, predicted_values):
 def plot_model_loss(train_loss, test_loss):
     fig = plt.figure(figsize=(6, 3))
     _ = plot.model_loss(train_loss, test_loss)
-    st.pyplot(fig, use_container_width=True, transparent=True)
+    st.pyplot(fig, width="stretch", transparent=True)
     return None
 
 

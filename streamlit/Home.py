@@ -3,7 +3,6 @@
 
 # Imports
 import os
-import sys
 
 import matplotlib.pyplot as plt
 import streamlit as st
@@ -11,7 +10,6 @@ import pyprojroot.here
 import numpy as np
 import pandas as pd
 
-sys.path.insert(0, str(pyprojroot.here()))  # Add parent directory to path
 from src import process  # pylint: disable=wrong-import-position
 from src import plot  # pylint: disable=wrong-import-position
 from src import util  # pylint: disable=wrong-import-position

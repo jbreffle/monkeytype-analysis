@@ -2,4 +2,13 @@
 data/
 models/
 notebooks/
+.venv/
 venv/
+.git/
+.github/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+*.pem
+*.key

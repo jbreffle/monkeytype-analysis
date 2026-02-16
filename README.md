@@ -7,7 +7,7 @@ with an interactive streamlit
 
 ## Usage notes for local development
 
-- Set up your python environment based on ./requirements.txt
+- Install dependencies with `uv sync --group dev --group notebooks`
 - Replace the data in ./data/raw/ with your own data downloaded from your monkeytype [account](https://monkeytype.com/account) using the "Export CSV" button
 - Run the notebook as desired
 - Note: monkeytype only retains the 1000 most recent trials, so to store all of your results you must periodically download your data

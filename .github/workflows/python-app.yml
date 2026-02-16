@@ -15,20 +15,22 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: 
-      image: jbreffle/monkeytype-analysis:latest  # Use the Docker image from Docker Hub
-    
+
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.2.2
+    - name: Build CI Docker image
+      run: |
+        docker build -t monkeytype-analysis-ci:${{ github.sha }} .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        docker run --rm monkeytype-analysis-ci:${{ github.sha }} flake8 . --exclude .venv,venv --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+        docker run --rm monkeytype-analysis-ci:${{ github.sha }} flake8 . --exclude .venv,venv --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest (trusted push only)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
-        pytest -vv
+        docker run --rm -e GITHUB_TOKEN monkeytype-analysis-ci:${{ github.sha }} pytest -vv
       env:
         GITHUB_TOKEN: ${{ secrets.MT_GITHUB_TOKEN }}
         

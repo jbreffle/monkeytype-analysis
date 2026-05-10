@@ -72,10 +72,37 @@ def _json_default(value: Any) -> Any:
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
+def _clean_json(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _clean_json(item) for key, item in value.items()}
+    if isinstance(value, list | tuple):
+        return [_clean_json(item) for item in value]
+    if isinstance(value, pd.Timestamp):
+        return value.isoformat()
+    if isinstance(value, np.datetime64):
+        return pd.Timestamp(value).isoformat()
+    if isinstance(value, np.integer):
+        return int(value)
+    if isinstance(value, np.floating):
+        value = float(value)
+    if isinstance(value, float):
+        return None if math.isnan(value) or math.isinf(value) else value
+    if isinstance(value, np.ndarray):
+        return _clean_json(value.tolist())
+    if pd.isna(value) and not isinstance(value, str):
+        return None
+    return value
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, default=_json_default, separators=(",", ":"), allow_nan=False),
+        json.dumps(
+            _clean_json(payload),
+            default=_json_default,
+            separators=(",", ":"),
+            allow_nan=False,
+        ),
         encoding="utf-8",
     )
 

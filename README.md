@@ -13,6 +13,33 @@ with an interactive streamlit
 - Note: monkeytype only retains the 1000 most recent trials, so to store all of your results you must periodically download your data
 - Note: The "Export CSV" button on the monkeytype.com/account page will export only the data you are currently viewing, so make sure "all" is selected under the "filters" option in order to export all of your data
 
+## Static app build
+
+The Streamlit app can be replicated as generated static files:
+
+```bash
+UV_CACHE_DIR=/tmp/uv-cache uv run python scripts/build_static.py
+python -m http.server 8000 --directory dist
+```
+
+The build copies `static_app/` into `dist/`, precomputes simulations and model
+predictions, and writes page-specific JSON under `dist/data/`. If local
+Monkeytype data exists under `data/raw/` or `data/processed/`, it is processed
+with the existing Python pipeline and included in the static app. Without local
+typing data, the static app still builds with upload support, simulations, and
+model outputs, but the default Home and Trial difficulty charts show a data
+availability notice.
+
+For GitHub Pages, configure Pages to deploy from GitHub Actions and add the
+private data token as the `MT_GITHUB_TOKEN` repository secret. The
+`.github/workflows/pages.yml` workflow runs:
+
+```bash
+uv run python scripts/build_static.py --allow-download --strict-data
+```
+
+`dist/` is generated output and remains ignored by git.
+
 ## Notebooks
 
 - 1_explore: What does the data look like when we apply basic visualizations and analysis?

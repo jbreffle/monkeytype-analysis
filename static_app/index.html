@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Static Monkeytype typing analysis dashboard built from the Python analysis pipeline."
+    />
+    <title>Monkeytype Analysis</title>
+    <link rel="icon" href="assets/images/favicons/jb-favicon-512x512.png" />
+    <link rel="stylesheet" href="assets/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#home" aria-label="Monkeytype Analysis home">
+          <img src="assets/images/favicons/jb-favicon-512x512.png" alt="" />
+          <span>Monkeytype Analysis</span>
+        </a>
+        <nav class="nav" aria-label="Static app pages">
+          <a href="#home" data-page="home">Home</a>
+          <a href="#trial" data-page="trial">Trial difficulty</a>
+          <a href="#simulation" data-page="simulation">Simulated typing</a>
+          <a href="#model" data-page="model">Predicting performance</a>
+        </nav>
+        <div class="sidebar-links">
+          <a href="https://jbreffle.github.io/">jbreffle.github.io</a>
+          <a href="https://github.com/jbreffle/monkeytype-analysis">GitHub repo</a>
+        </div>
+      </aside>
+      <main class="main">
+        <div id="page" class="page" aria-live="polite">
+          <section class="loading-panel">Loading static data...</section>
+        </div>
+      </main>
+    </div>
+    <script src="assets/app.js"></script>
+  </body>
+</html>
